@@ -1,6 +1,7 @@
 import nltk 
 from nltk.corpus import movie_reviews 
 import random , pickle 
+from nltk.tokenize import word_tokenize
 from nltk.classify.scikitlearn import SklearnClassifier 
 from sklearn.naive_bayes import MultinomialNB, GaussianNB, BernoulliNB
 from sklearn.linear_model import LogisticRegression, SGDClassifier
@@ -8,33 +9,42 @@ from sklearn.svm import SVC, LinearSVC, NuSVC
 from nltk.classify import ClassifierI
 from statistics import mode 
 from collections import Counter 
+import unicodedata 
+
 
 
 # Create the document of word and the label as pos or neg 
 documents = []
-i=0
-for category in movie_reviews.categories():
-	for fileid in movie_reviews.fileids(category):
-		documents.append((list(movie_reviews.words(fileid)),category))
-		
-		
+
+short_pos = open("short_reviews/positive.txt",'r').read()
+short_neg = open("short_reviews/negative.txt",'r').read()
+
+
+for pos_sent in short_pos.split("\n"):
+	documents.append((pos_sent,"pos"))
+
+for neg_sent in short_neg.split("\n"):
+	documents.append((neg_sent,"neg"))
+
+short_pos_words = word_tokenize(short_pos)
+short_neg_words = word_tokenize(short_neg)
+
+all_words = []
+for w in short_pos_words:
+	all_words.append(w.lower())
+
+for w in short_neg_words:
+	all_words.append(w.lower())
+
 
 
 random.shuffle(documents)
-
-
-# get all the word 
-
-all_words = []
-
-for w in movie_reviews.words():
-	all_words.append(w.lower())
 
 # find the frequency of each word 
 all_words = nltk.FreqDist(all_words)
 
 #Take the top 3000 word coz rest will be useless
-word_features = list(all_words.keys())[:3000]
+word_features = list(all_words.keys())[:5000]
 
 #document is one file 
 
@@ -67,8 +77,8 @@ def find_feature(document):
 	return features
 #print((find_feature(movie_reviews.words('neg/cv000_29416.txt'))))
 featuresets = [(find_feature(rev),cat) for (rev,cat) in documents]
-training_set = featuresets[:1900]
-testing_set = featuresets[1900:]
+training_set = featuresets[:10000]
+testing_set = featuresets[10000:]
 
 classifier = nltk.NaiveBayesClassifier.train(training_set)
 print("Naive Bayes accuracy percent:",nltk.classify.accuracy(classifier,testing_set)*100)
